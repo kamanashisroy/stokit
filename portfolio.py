@@ -42,17 +42,19 @@ class portfolio:
         Show current status of the stock
         '''
         symbol_list = []
+        cost_list = []
         value_list = []
         gain_list = []
         gain_ratio_list = []
 
         ####################################
-        # calculate total_investment, symbol_list
+        # calculate total_investment, symbol_list, cost_list
         ####################################
         total_investment = 0.0
         for company in self.companies:
             total_investment += company.COST
             symbol_list.append(company.SYMBOL)
+            cost_list.append(company.COST)
 
         #################################################
         # calculate total_value, value_list, gain_list, gain_ratio_list
@@ -68,7 +70,10 @@ class portfolio:
                 current_value = company.COUNT*float(x['Close'])
                 value_list.append(current_value)
                 gain_list.append(current_value-company.COST)
-                gain_ratio_list.append((current_value-company.COST)/company.COST)
+                gain_ratio = 0
+                if company.COST != 0:
+                    gain_ratio = (current_value-company.COST)/company.COST
+                gain_ratio_list.append(gain_ratio)
                 print("{company}\t\t|{cost:.2f}\t\t|{value:.2f}\t\t|{gain:.2f}".format(company=company.SYMBOL,cost=company.COST,value=current_value,gain=(current_value-company.COST)))
                 total_value += current_value
 
@@ -76,7 +81,7 @@ class portfolio:
         print("Total value", total_value)
         print("gain/loss", total_value-total_investment)
 
-        return symbol_list, value_list, gain_list, gain_ratio_list
+        return symbol_list, cost_list, value_list, gain_list, gain_ratio_list
 
 
 if __name__ == "__main__":

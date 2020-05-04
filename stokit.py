@@ -4,11 +4,14 @@ from portfolio import portfolio
 from portfolio_chart import chart
 import argparse
 
+CURRENT = '.stock/CURRENT'
 def select_portfolio(filename):
     '''
-    TODO write the filename in .stock/current
+    Write the filename in .stock/current
     '''
-    pass
+    f = open(CURRENT, 'w')
+    f.write(filename)
+    f.close()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='STOKIT stock monitoring tool.')
@@ -18,8 +21,8 @@ if __name__ == "__main__":
 
     # port
     port_command_parser = subcommands.add_parser('port', help='Select portfolio file')
-    port_command_parser.add_argument('portfile', type=argparse.FileType('r'))
-    port_command_parser.set_defaults(func=select_portfolio)
+    port_command_parser.add_argument('portfile')
+    #port_command_parser.add_argument('portfile', type=argparse.FileType('r'))
 
     # pull
     pull_command_parser = subcommands.add_parser('pull', help='pull history')
@@ -31,12 +34,21 @@ if __name__ == "__main__":
 
     # status
     status_command_parser = subcommands.add_parser('status', help='Show loss/gain')
-    status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut'])
+    status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut','bar'])
     
     args = parser.parse_args()
     print(args)
 
+    if args.action == 'port':
+        select_portfolio(args.portfile)
+    
     port = './portfolio.csv'
+    try:
+        with open(CURRENT, 'r') as curfp:
+            port = curfp.read()
+    except:
+        print("current portfolio is not set")
+
     tool = portfolio(port)
     tool_chart = chart(tool)
     if args.action == 'show':
