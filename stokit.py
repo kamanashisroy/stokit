@@ -36,6 +36,10 @@ if __name__ == "__main__":
     status_command_parser = subcommands.add_parser('status', help='Show loss/gain')
     status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut','bar'])
     
+    # compare
+    compare_command_parser = subcommands.add_parser('compare', help='Compare loss/gain')
+    compare_command_parser.add_argument('--chart', help='Display charts',choices=['table'])
+
     args = parser.parse_args()
     print(args)
 
@@ -60,3 +64,8 @@ if __name__ == "__main__":
             tool.status()
     if args.action == 'pull':
         tool.pull()
+    if args.action == 'compare':
+        if args.chart:
+            tool_chart.compare(args.chart)
+        else:
+            tool.compare()

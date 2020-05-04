@@ -3,6 +3,7 @@
 from portfolio import portfolio
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import numpy as np
 
 DOUGHNUT_SIZE = 0.3
 class chart:
@@ -51,4 +52,28 @@ class chart:
             ax_doughnut.bar(range(0,len(symbol_list)), height=gain_list)
 
         plt.show()
+
+    def compare(self, display_method):
+
+        symbol_list, time_list, price_list, gain_list, gain_ratio_list  = self.port.compare()
+
+        if 'table' == display_method:
+            cmap = plt.get_cmap('RdYlGn')
+            n_rows = len(time_list)
+            n_cols = len(symbol_list)
+            y_offset = np.zeros(n_cols)
+            x_offset = np.arange(n_cols)
+            width = 0.4
+            for row in range(n_rows):
+                #plt.bar(range(0,n_cols), height=gain_list[row], bottom=y_offset, color=colors[row], tick_label=symbol_list)
+                gain_color = cmap([0.5 + x/2 for x in gain_ratio_list[row]])
+                #plt.bar(x_offset/n_rows, height=gain_list[row], bottom=y_offset, color=gain_color, tick_label=symbol_list)
+                plt.bar(x_offset, height=gain_list[row], width=width/n_rows, color=gain_color, tick_label=symbol_list)
+                y_offset = y_offset + gain_list[row]
+                x_offset = x_offset + width/n_rows
+            #plt.table(cellText=gain_ratio_list, rowLevels=time_list, rowColours=colors, colLevels=symbol_list)
+            #plt.table(cellText=gain_ratio_list, rowLevels=time_list, colLevels=symbol_list)
+
+        plt.show()
+
 
