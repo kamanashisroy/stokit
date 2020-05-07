@@ -34,11 +34,15 @@ if __name__ == "__main__":
 
     # status
     status_command_parser = subcommands.add_parser('status', help='Show loss/gain')
-    status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut','bar'])
+    status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut','bar','polar'])
     
     # compare
     compare_command_parser = subcommands.add_parser('compare', help='Compare loss/gain')
-    compare_command_parser.add_argument('--chart', help='Display charts',choices=['table'])
+    compare_command_parser.add_argument('--chart', help='Display charts',choices=['table','candlestick'])
+
+    # quote
+    symbol_command_parser = subcommands.add_parser('quote', help='Show company quote')
+    symbol_command_parser.add_argument('symbol', help='Company symbol')
 
     args = parser.parse_args()
     print(args)
@@ -55,17 +59,27 @@ if __name__ == "__main__":
 
     tool = portfolio(port)
     tool_chart = chart(tool)
-    if args.action == 'show':
+
+    #if 'port' == args.action and 'portfile' not in args.keys():
+    #    tool.show()
+
+    if 'show' == args.action:
         tool.show()
-    if args.action == 'status':
+
+    if 'status' == args.action:
         if args.chart:
             tool_chart.status(args.chart)
         else:
             tool.status()
-    if args.action == 'pull':
+
+    if 'pull' == args.action:
         tool.pull()
-    if args.action == 'compare':
+
+    if 'compare' == args.action:
         if args.chart:
             tool_chart.compare(args.chart)
         else:
             tool.compare()
+
+    if 'quote' == args.action:
+        tool_chart.quote(args.symbol)
