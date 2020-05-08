@@ -2,7 +2,9 @@
 
 import yfinance as yf
 import csv
+import math
 from collections import namedtuple
+from colorama import Fore
 
 COMPANY = namedtuple("COMPANY","SYMBOL,COUNT,COST")
 
@@ -84,9 +86,21 @@ class portfolio:
                 if company.COST != 0:
                     gain_ratio = (current_value-company.COST)/company.COST
                 gain_ratio_list.append(gain_ratio)
-                print("{company}\t\t|{cost:8.2f}\t\t|{value:8.2f}\t\t|{gain:8.2f}\t\t|{gain_pct:8.2f}".format(company=company.SYMBOL,cost=company.COST,value=current_value,gain=(current_value-company.COST),gain_pct=gain_ratio*100))
+
+                color = Fore.GREEN
+                if gain_ratio < 0:
+                    color = Fore.RED
+
+                tail = ''
+                if gain_ratio < 0:
+                    tail = ''.join(['-']*int(math.ceil(-gain_ratio*20)))
+                else:
+                    tail = ''.join(['+']*int(math.ceil(gain_ratio*20)))
+
+                print("{color}{company}\t\t|{cost:8.2f}\t\t|{value:8.2f}\t\t|{gain:8.2f}\t\t|{gain_pct:8.2f} \t\t{tail}".format(color=color,company=company.SYMBOL,cost=company.COST,value=current_value,gain=(current_value-company.COST),gain_pct=gain_ratio*100,tail=tail))
                 total_value += current_value
 
+        print(Fore.RESET)
         print("Total total_investment", total_investment)
         print("Total value", total_value)
         print("gain/loss", total_value-total_investment)
@@ -134,19 +148,23 @@ class portfolio:
                             except:
                                 print("Value error")
                                 first = None
+                                last = None
                                 continue
-                        xlow = min(xlow,float(x['Low']))
-                        xhigh = max(xhigh,float(x['High']))
-                            
+                        try:
+                            xlow = min(xlow,float(x['Low']))
+                            xhigh = max(xhigh,float(x['High']))
+                        except:
+                            print("Value error")
+
                     ohlc_open_list.append(xopen)
                     ohlc_high_list.append(xhigh)
                     ohlc_low_list.append(xlow)
                     ohlc_close_list.append(xclose)
 
-                    current_value = float(last['Low'])
+                    current_value = float(last['Close']) if last is not None else first['Close'] if first is not None else 0.0
                     price_list.append(current_value)
 
-                    prev_value = float(first['Open'])
+                    prev_value = float(first['Open']) if first is not None else last['Open'] if last is not None else 0.0
                     gain_list.append(current_value-prev_value)
 
                     gain_ratio = 0
@@ -154,7 +172,18 @@ class portfolio:
                         gain_ratio = (current_value-prev_value)/prev_value
                     gain_ratio_list.append(gain_ratio)
 
-                    print("{company}\t\t|{prev:.2f}\t\t|{current:.2f}\t\t|{gain:.2f}\t\t|{gain_pct:.2f}%".format(company=company.SYMBOL,prev=prev_value,current=current_value,gain=(current_value-prev_value),gain_pct=gain_ratio*100))
+                    color = Fore.GREEN
+                    if gain_ratio < 0:
+                        color = Fore.RED
+
+                    tail = ''
+                    if gain_ratio < 0:
+                        tail = ''.join(['-']*int(math.ceil(-gain_ratio*20)))
+                    else:
+                        tail = ''.join(['+']*int(math.ceil(gain_ratio*20)))
+
+
+                    print("{color}{company}\t\t|{prev:.2f}\t\t|{current:.2f}\t\t|{gain:.2f}\t\t|{gain_pct:.2f}% \t\t{tail}".format(color=color,company=company.SYMBOL,prev=prev_value,current=current_value,gain=(current_value-prev_value),gain_pct=gain_ratio*100,tail=tail))
             price_list_timely.append(price_list)
             gain_list_timely.append(gain_list)
             gain_ratio_list_timely.append(gain_ratio_list)
@@ -162,14 +191,14 @@ class portfolio:
             ohlc_high_list_timely.append(ohlc_high_list)
             ohlc_low_list_timely.append(ohlc_low_list)
             ohlc_close_list_timely.append(ohlc_close_list)
-            print()
+            print(Fore.RESET)
 
         return COMPARE_RESULT([company.SYMBOL for company in self.companies],TIME_PROFILE,price_list_timely,gain_list_timely,gain_ratio_list_timely,ohlc_open_list_timely,ohlc_high_list_timely,ohlc_low_list,ohlc_close_list_timely)
 
  
-    def quote(self, symbol, pullit=True):
+    def quote(self, symbol, use_local_data=False):
 
-        if pullit:
+        if not use_local_data:
             self.pull_helper(symbol)
 
         # TODO dump today's information

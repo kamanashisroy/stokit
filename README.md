@@ -8,6 +8,7 @@ Requirements
 - mplfinance
 - panda
 - numpy
+- colorama
 
 Demo
 =====
@@ -32,6 +33,12 @@ It is also possible to visualize as pie or bar or doughnut .
 stokit status --chart bar
 ```
 
+or 
+
+```
+stokit status --chart bar doughnut
+```
+
 #### stokit compare
 
 This tool is useful to compare multiple stocks before we buy or sell.
@@ -44,4 +51,10 @@ Or we can check it visually,
 
 ```
 stokit compare --chart table
+```
+
+#### stokit quote
+
+```
+stokit quote m
 ```

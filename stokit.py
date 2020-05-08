@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
     # status
     status_command_parser = subcommands.add_parser('status', help='Show loss/gain')
-    status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut','bar','polar'])
+    status_command_parser.add_argument('--chart', help='Display charts pie or doughnut',choices=['pie','doughnut','bar','polar'], nargs='+')
     
     # compare
     compare_command_parser = subcommands.add_parser('compare', help='Compare loss/gain')
@@ -43,6 +43,7 @@ if __name__ == "__main__":
     # quote
     symbol_command_parser = subcommands.add_parser('quote', help='Show company quote')
     symbol_command_parser.add_argument('symbol', help='Company symbol')
+    symbol_command_parser.add_argument('--local', help='Show cached information', default=False, action='store_const', const=True)
 
     args = parser.parse_args()
     print(args)
@@ -82,4 +83,4 @@ if __name__ == "__main__":
             tool.compare()
 
     if 'quote' == args.action:
-        tool_chart.quote(args.symbol)
+        tool_chart.quote(args.symbol, args.local)
