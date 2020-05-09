@@ -38,7 +38,7 @@ if __name__ == "__main__":
     
     # compare
     compare_command_parser = subcommands.add_parser('compare', help='Compare loss/gain')
-    compare_command_parser.add_argument('--chart', help='Display charts',choices=['table','candlestick'])
+    compare_command_parser.add_argument('--chart', help='Display charts',choices=['table','polar','bar'], nargs='+')
 
     # quote
     symbol_command_parser = subcommands.add_parser('quote', help='Show company quote')
