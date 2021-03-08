@@ -9,6 +9,8 @@ Requirements
 - panda
 - numpy
 - colorama
+- sklearn
+- scikit
 
 Demo
 =====
@@ -18,7 +20,29 @@ Demo
 We can select a portfolio like the following,
 
 ```
-stokit port portfolio.csv
+stokit port watchlist.csv
+```
+
+or
+
+```
+stokit port cruiselines.csv
+```
+
+#### stokit import
+
+It is possible import exported csv file from broker(currently chase is supported).
+
+```
+stokit import chase_positions.csv
+```
+
+#### stokit pull
+
+Download all the data from yahoo-finance.
+
+```
+stokit pull
 ```
 
 #### stokit status

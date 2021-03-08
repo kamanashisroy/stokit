@@ -1,12 +1,14 @@
 #!python
 
 from portfolio import portfolio
+from portfolio_intel import portfolio_intel
 import matplotlib.pyplot as plt
 import mplfinance as mpf
 from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
+from colorama import Fore
 
 DOUGHNUT_SIZE = 0.3
 POLAR_SIZE = 0.3
@@ -16,12 +18,13 @@ RED_COLOR = "#ff000000"
 GREEN_COLOR = "#00ff0000"
 BAR_ALPHA = 0.5
 POLAR_COMPARE_TM_INDEX = 1 # 3mo
-POLAR_BOTTOM = 1.0
+POLAR_BOTTOM = 10
 
 class chart:
 
     def __init__(self,port):
         self.port = port
+        self.intel = portfolio_intel(port)
 
 
     def status(self, display_method):
@@ -59,28 +62,43 @@ class chart:
 
             ax = fig.add_subplot(len(display_method), 1, display_method.index('polar')+1, projection='polar')
             ax.set_title('Status polar %s' % self.port.title())
-            symbol_label = [r'{symbol} gain:{gain_ratio:2.2f}% $\sigma$:{sigma:2.2f}'.format(symbol=x,gain_ratio=result.GAIN_RATIO[i]*100,sigma=result.STD[i]) for i,x in enumerate(result.SYMBOL)]
+            gain_label = [r'{symbol} gain:{gain_ratio:2.2f}%'.format(symbol=x,gain_ratio=result.GAIN_RATIO[i]*100) for i,x in enumerate(result.SYMBOL)]
 
-            self.draw_gain_sigma_bar(ax, result.GAIN_RATIO, result.STD, symbol_label)
-            #plt.ylabel('daily gain')
-            #plt.xlabel('sigma')
+            self.draw_gain_sigma_bar(ax, result.GAIN_RATIO, [BAR_SIZE]*len(result.SYMBOL), gain_label)
+
+        if 'sigmapolar' in display_method:
+
+            ax = fig.add_subplot(len(display_method), 1, display_method.index('sigmapolar')+1, projection='polar')
+            ax.set_title('Status sigmapolar %s' % self.port.title())
+
+            sigma_gain_label = [r'{symbol} gain:{gain_ratio:2.2f}% $\sigma$:{sigma:2.2f}'.format(symbol=x,gain_ratio=result.GAIN_RATIO[i]*100,sigma=result.STD[i]) for i,x in enumerate(result.SYMBOL)]
+            self.draw_gain_sigma_bar(ax, result.GAIN_RATIO, result.STD, sigma_gain_label)
+
+        if 'costpolar' in display_method:
+
+            ax = fig.add_subplot(len(display_method), 1, display_method.index('costpolar')+1, projection='polar')
+            ax.set_title('Status costpolar %s' % self.port.title())
+
+            cost_gain_label = [r'{symbol} gain:{gain_ratio:2.2f}% cost:{cost:2.2f}'.format(symbol=x,gain_ratio=result.GAIN_RATIO[i]*100,cost=result.COST[i]) for i,x in enumerate(result.SYMBOL)]
+            self.draw_gain_sigma_bar(ax, result.GAIN_RATIO, result.COST, cost_gain_label)
+
 
         if 'bar' in display_method:
 
             ax = fig.add_subplot(len(display_method), 1, display_method.index('bar')+1)
             ax.set_title('Summary bar %s' % self.port.title())
-            cmap = plt.get_cmap('RdYlGn')
 
-            # convert gain_ratio to colormap
-            gain_color = cmap([0.5 + x/2 for x in result.GAIN_RATIO])
-            change_color = [RED_COLOR if x < 0 else GREEN_COLOR for x in result.GAIN_RATIO]
+            self.draw_cost_gain_bar(ax, result.GAIN_RATIO, result.COST, result.GAIN, result.SYMBOL, [BAR_SIZE]*len(result.SYMBOL))
             
-            #x_offset = range(0,len(result.SYMBOL))
-            x_offset = np.cumsum([x+4 for x in result.STD])
-            np.subtract(x_offset,result.STD[0])
+            plt.ylabel('cost and gain')
+
+        if 'sigmabar' in display_method:
+
+            ax = fig.add_subplot(len(display_method), 1, display_method.index('sigmabar')+1)
+            ax.set_title('Summary sigmabar %s' % self.port.title())
+
+            self.draw_cost_gain_bar(ax, result.GAIN_RATIO, result.COST, result.GAIN, result.SYMBOL, result.STD)
             
-            ax.bar(x_offset, height=result.COST, width=result.STD, color=gain_color, tick_label=result.SYMBOL, edgecolor=BAR_EDGE_COLOR)
-            ax.bar(x_offset, height=result.GAIN, width=result.STD, color=change_color, edgecolor=BAR_EDGE_COLOR, alpha=BAR_ALPHA)
             plt.ylabel('cost and gain')
             plt.xlabel('sigma')
 
@@ -94,11 +112,11 @@ class chart:
             display_method = [display_method]
 
         fig = plt.figure()
+        n_cols = len(result.SYMBOL_LIST)
 
         if 'table' in display_method:
             cmap = plt.get_cmap('RdYlGn')
             n_rows = len(result.PERIOD_LIST)
-            n_cols = len(result.SYMBOL_LIST)
             #y_offset = np.zeros(n_cols)
             x_offset = np.arange(n_cols)
             ax = fig.add_subplot(len(display_method), 1, display_method.index('table')+1)
@@ -166,7 +184,7 @@ class chart:
         #edge_cmap = plt.get_cmap('Dark2')
         #edge_color = edge_cmap(range(len(sigma)))
         
-        radii_gain = [100*x+10 for x in gain_ratio]
+        radii_gain = [100*x for x in gain_ratio]
         max_radii = np.max(radii_gain)
 
         volatility = np.sum(sigma)
@@ -184,4 +202,39 @@ class chart:
                 ax.text(theta_offset[i], max_radii, xtext)
 
         #plt.legend(loc="upper left")
+
+
+    def draw_cost_gain_bar(self, ax, gain_ratio, cost, gain, display_label, bar_width):
+        '''
+        Draw cost gain bar
+
+        '''
+        cmap = plt.get_cmap('RdYlGn')
+
+        # convert gain_ratio to colormap
+        gain_color = cmap([0.5 + x/2 for x in gain_ratio])
+        change_color = [RED_COLOR if x < 0 else GREEN_COLOR for x in gain_ratio]
+        
+        x_dist = np.max(bar_width)/2
+        x_offset = np.cumsum([x+x_dist for x in bar_width])
+        x_offset = np.subtract(x_offset, bar_width)
+
+        ax.bar(x_offset, height=cost, width=bar_width, color=gain_color, tick_label=display_label, edgecolor=BAR_EDGE_COLOR, alpha=BAR_ALPHA)
+        ax.bar(x_offset, height=gain, width=bar_width, color=change_color, edgecolor=BAR_EDGE_COLOR, alpha=BAR_ALPHA)
+
+    def bullweek(self, symbol, use_local_data=False, TM='3mo'):
+        '''
+        Predict if it is bull week or bear week.
+
+        '''
+        if 'all' == symbol:
+            result  = self.port.compare()
+            print('symbol\t\t|week day\t|accuracy\t|speculation')
+            print(' ---\t\t| ---\t\t| ---\t\t| ---')
+            for cur_symbol in result.SYMBOL_LIST:
+                self.intel.bullweek(cur_symbol, True, TM)
+        else:
+            self.intel.bullweek(symbol, use_local_data, TM)
+
+        print(Fore.RESET)
 

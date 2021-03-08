@@ -16,13 +16,14 @@ PANDAS_DATATYPE = {'High':np.float64, 'Low': np.float64, 'Close': np.float64, 'V
 COMPANY = namedtuple("COMPANY","SYMBOL,COUNT,COST")
 COMPARE_RESULT = namedtuple("COMPARE_RESULT", "SYMBOL_LIST,COST_LIST,PERIOD_LIST,STD_LIST_BY_PERIOD,GAIN_LIST_BY_PERIOD,GAIN_RATIO_LIST_BY_PERIOD,OPEN_LIST_BY_PERIOD,HIGH_LIST_BY_PERIOD,LOW_LIST_BY_PERIOD,CLOSE_LIST_BY_PERIOD")
 STATUS_RESULT = namedtuple("STATUS_RESULT", "SYMBOL,COST,VALUE,STD,GAIN,GAIN_RATIO")
+MAX_TAIL_SIZE = 200
 
 class portfolio:
     def __init__(self, filename):
         self.companies = []
         for row in csv.reader(open(filename, 'r'), delimiter='|', skipinitialspace=True):
             symbol = row[0].strip()
-            count = int(row[1].strip())
+            count = float(row[1].strip())
             cost = float(row[2].strip())
             self.companies.append(COMPANY(symbol,count,cost))
         self.filename = filename
@@ -103,9 +104,9 @@ class portfolio:
 
             tail = ''
             if gain_ratio < 0:
-                tail = ''.join(['-']*int(math.ceil(-gain_ratio*20)))
+                tail = ''.join(['-']*min(int(math.ceil(-gain_ratio*20)),MAX_TAIL_SIZE))
             else:
-                tail = ''.join(['+']*int(math.ceil(gain_ratio*20)))
+                tail = ''.join(['+']*min(int(math.ceil(gain_ratio*20)),MAX_TAIL_SIZE))
 
             print("{color}{company}\t\t|{sigma:8.2f}\t\t|{cost:8.2f}\t\t|{value:8.2f}\t\t|{gain:8.2f}\t\t|{gain_pct:8.2f} \t\t{tail}".format(color=color,company=company.SYMBOL,sigma=xstd,cost=company.COST,value=current_value,gain=(current_value-company.COST),gain_pct=gain_ratio*100,tail=tail))
             total_value += current_value
@@ -160,9 +161,9 @@ class portfolio:
 
                 tail = ''
                 if gain_ratio < 0:
-                    tail = ''.join(['-']*int(math.ceil(-gain_ratio*20)))
+                    tail = ''.join(['-']*min(int(math.ceil(-gain_ratio*20)),MAX_TAIL_SIZE))
                 else:
-                    tail = ''.join(['+']*int(math.ceil(gain_ratio*20)))
+                    tail = ''.join(['+']*min(int(math.ceil(gain_ratio*20)),MAX_TAIL_SIZE))
 
                 print("{color}{company}\t\t|{prev:.2f}\t\t|{current:.2f}\t\t|{std:0.2f}\t\t|{gain:.2f}\t\t|{gain_pct:.2f}% \t\t{tail}".format(color=color,company=company.SYMBOL,prev=xopen,current=xclose,std=xstd,gain=(xclose-xopen),gain_pct=gain_ratio*100,tail=tail))
 
