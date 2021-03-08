@@ -114,6 +114,23 @@ class chart:
         fig = plt.figure()
         n_cols = len(result.SYMBOL_LIST)
 
+        if 'heat' in display_method:
+            cmap = plt.get_cmap('RdYlGn')
+            n_rows = len(result.PERIOD_LIST)
+            x_offset = np.arange(n_cols)
+            ax = fig.add_subplot(len(display_method), 1, display_method.index('heat')+1)
+            ax.set_xlabel('Symbol')
+            ax.set_ylabel('Change')
+            ax.set_xticks(np.arange(n_cols), minor=False)
+            ax.set_yticks(np.arange(n_rows), minor=False)
+            ax.set_xticklabels(result.SYMBOL_LIST,rotation=90)
+            ax.set_yticklabels(list(reversed(result.PERIOD_LIST)))
+            gain_color = []
+            for row in range(n_rows):
+                gain_color.append([1 if x > 1 else (-1 if x < -1 else x) for x in result.GAIN_RATIO_LIST_BY_PERIOD[row]])
+            heatmap = ax.pcolor(gain_color, cmap=cmap, edgecolors='k', linewidths=2)
+            cbar = plt.colorbar(heatmap)
+
         if 'table' in display_method:
             cmap = plt.get_cmap('RdYlGn')
             n_rows = len(result.PERIOD_LIST)

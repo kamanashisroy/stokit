@@ -76,7 +76,7 @@ if __name__ == "__main__":
     
     # compare
     compare_command_parser = subcommands.add_parser('compare', help='Compare loss/gain')
-    compare_command_parser.add_argument('--chart', help='Display charts',choices=['table','polar','bar'], nargs='+')
+    compare_command_parser.add_argument('--chart', help='Display charts',choices=['heat','table','polar','bar'], nargs='+')
 
     # quote
     quote_command_parser = subcommands.add_parser('quote', help='Show company quote')

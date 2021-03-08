@@ -5,7 +5,9 @@ import csv
 import math
 import pandas as pd
 import numpy as np
+from itertools import islice
 from collections import namedtuple
+from operator import attrgetter
 from colorama import Fore
 
 
@@ -166,6 +168,8 @@ class portfolio:
                     tail = ''.join(['+']*min(int(math.ceil(gain_ratio*20)),MAX_TAIL_SIZE))
 
                 print("{color}{company}\t\t|{prev:.2f}\t\t|{current:.2f}\t\t|{std:0.2f}\t\t|{gain:.2f}\t\t|{gain_pct:.2f}% \t\t{tail}".format(color=color,company=company.SYMBOL,prev=xopen,current=xclose,std=xstd,gain=(xclose-xopen),gain_pct=gain_ratio*100,tail=tail))
+
+            print('https://google.com/finance/quote/{SYMBOL1}?authuser=0&comparison={OTHERSYMBOLS}'.format(SYMBOL1=self.companies[0].SYMBOL, OTHERSYMBOLS='%2C'.join(map(attrgetter('SYMBOL'),islice(self.companies,1,None)))))
 
             std_list_timely.append(std_list)
             gain_list_timely.append(gain_list)

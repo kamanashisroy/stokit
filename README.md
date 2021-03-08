@@ -74,7 +74,7 @@ stokit compare
 Or we can check it visually,
 
 ```
-stokit compare --chart table
+stokit compare --chart heat
 ```
 
 #### stokit quote
