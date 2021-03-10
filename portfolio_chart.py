@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import mplfinance as mpf
 from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.cm as cm
+import matplotlib.colors as mplcolors
 import numpy as np
 import pandas as pd
 from colorama import Fore
@@ -19,6 +20,7 @@ GREEN_COLOR = "#00ff0000"
 BAR_ALPHA = 0.5
 POLAR_COMPARE_TM_INDEX = 1 # 3mo
 POLAR_BOTTOM = 10
+COLOR_NORM = mplcolors.Normalize(vmin=-1,vmax=+1)
 
 class chart:
 
@@ -54,7 +56,7 @@ class chart:
             cmap = plt.get_cmap('RdYlGn')
 
             # convert gain_ratio to colormap
-            gain_color = cmap([0.5 + x/2 for x in result.GAIN_RATIO])
+            gain_color = cmap([COLOR_NORM(x) for x in result.GAIN_RATIO])
             ax.pie(result.VALUE, labels=result.SYMBOL, colors=gain_color, autopct='%1.1f%%', radius=1, wedgeprops=dict(width=DOUGHNUT_SIZE, edgecolor='w'))
             #ax_doughnut.pie(value_list, colors=gain_color, radius=1-DOUGHNUT_SIZE, wedgeprops=dict(width=DOUGHNUT_SIZE, edgecolor='w'))
 
@@ -115,20 +117,29 @@ class chart:
         n_cols = len(result.SYMBOL_LIST)
 
         if 'heat' in display_method:
+            '''
+            Reference https://matplotlib.org/stable/gallery/images_contours_and_fields/image_annotated_heatmap.html
+            '''
             cmap = plt.get_cmap('RdYlGn')
             n_rows = len(result.PERIOD_LIST)
-            x_offset = np.arange(n_cols)
             ax = fig.add_subplot(len(display_method), 1, display_method.index('heat')+1)
             ax.set_xlabel('Symbol')
             ax.set_ylabel('Change')
-            ax.set_xticks(np.arange(n_cols), minor=False)
-            ax.set_yticks(np.arange(n_rows), minor=False)
-            ax.set_xticklabels(result.SYMBOL_LIST,rotation=90)
-            ax.set_yticklabels(list(reversed(result.PERIOD_LIST)))
-            gain_color = []
+            ax.set_xticks(np.arange(0,n_cols,1))
+            #ax.set_xticklabels(['-'] + result.SYMBOL_LIST,rotation=90,visible=True)
+            ax.set_xticklabels(result.SYMBOL_LIST)
+            ax.set_yticks(np.arange(n_rows))
+            ax.set_yticklabels(result.PERIOD_LIST)
             for row in range(n_rows):
-                gain_color.append([1 if x > 1 else (-1 if x < -1 else x) for x in result.GAIN_RATIO_LIST_BY_PERIOD[row]])
-            heatmap = ax.pcolor(gain_color, cmap=cmap, edgecolors='k', linewidths=2)
+                for col in range(n_cols):
+                    #ax.text(col, row, '{gain_ratio:2.2f}%'.format(gain_ratio=result.GAIN_RATIO_LIST_BY_PERIOD[row][col]*100), ha='center', va='center',bbox=dict(boxstyle='round', facecolor='white', edgecolor='0.3'))
+                    ax.text(col, row, '{gain_ratio:2.2f}%'.format(gain_ratio=result.GAIN_RATIO_LIST_BY_PERIOD[row][col]*100), ha='center', va='center')
+                
+            plt.setp(ax.get_xticklabels(), rotation=45, ha="right",rotation_mode="anchor")
+
+            #heatmap = ax.matshow(result.GAIN_RATIO_LIST_BY_PERIOD,vmin=-1,vmax=1, cmap=cmap)
+            heatmap = ax.imshow(result.GAIN_RATIO_LIST_BY_PERIOD,vmin=-1,vmax=1, cmap=cmap)
+            #heatmap = ax.pcolor(result.GAIN_RATIO_LIST_BY_PERIOD, cmap=cmap, edgecolors='k', linewidths=2)
             cbar = plt.colorbar(heatmap)
 
         if 'table' in display_method:
@@ -139,7 +150,8 @@ class chart:
             ax = fig.add_subplot(len(display_method), 1, display_method.index('table')+1)
             for row in range(n_rows):
                 #plt.bar(range(0,n_cols), height=gain_list[row], bottom=y_offset, color=colors[row], tick_label=symbol_list)
-                gain_color = cmap([0.5 + x/2 for x in result.GAIN_RATIO_LIST_BY_PERIOD[row]])
+                #gain_color = cmap([0.5 + x/2 for x in result.GAIN_RATIO_LIST_BY_PERIOD[row]])
+                gain_color = cmap([COLOR_NORM(x) for x in result.GAIN_RATIO_LIST_BY_PERIOD[row]])
                 #plt.bar(x_offset/n_rows, height=gain_list[row], bottom=y_offset, color=gain_color, tick_label=symbol_list)
                 ax.bar(x_offset, height=result.GAIN_RATIO_LIST_BY_PERIOD[row], width=BAR_SIZE/n_rows, color=gain_color, edgecolor=BAR_EDGE_COLOR, tick_label=result.SYMBOL_LIST)
                 #y_offset = y_offset + gain_list[row]
@@ -196,7 +208,7 @@ class chart:
 
         '''
         cmap = plt.get_cmap('RdYlGn')
-        gain_color = cmap([0.5 + x/2 for x in gain_ratio])
+        gain_color = cmap([COLOR_NORM(x) for x in gain_ratio])
 
         #edge_cmap = plt.get_cmap('Dark2')
         #edge_color = edge_cmap(range(len(sigma)))
@@ -229,7 +241,7 @@ class chart:
         cmap = plt.get_cmap('RdYlGn')
 
         # convert gain_ratio to colormap
-        gain_color = cmap([0.5 + x/2 for x in gain_ratio])
+        gain_color = cmap([COLOR_NORM(x) for x in gain_ratio])
         change_color = [RED_COLOR if x < 0 else GREEN_COLOR for x in gain_ratio]
         
         x_dist = np.max(bar_width)/2

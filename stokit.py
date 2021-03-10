@@ -4,6 +4,8 @@ from portfolio import portfolio
 from portfolio_chart import chart
 import pandas as pd
 import argparse
+import csv
+from datetime import datetime
 
 CURRENT_PORT = '.stock/CURRENT_PORT'
 #CURRENT_HOLDING = '.stock/CURRENT_HOLDING'
@@ -16,34 +18,41 @@ def update_current(current, filename):
     f.write(filename)
     f.close()
 
-def import_portfolio(filename):
+def import_portfolio(broker,filename):
     '''
     build a portfolio named filename+'_imported.csv'
     
     Currently we only support chase imported files
-
-    TODO calculate footer
-
     '''
 
     outfile = filename+'_imported.csv'
-    skiplines = []
-    with open(filename, 'r') as src:
-        for i,line in enumerate(src.readlines(),1):
-            if 1 == i:
-                continue # do not skip header
-            if not line or not ('"' == line[0]):
-                print('skipping',line[0], line)
-                skiplines.append(i)
-    print('skipping lines', skiplines)
-    data = pd.read_csv(filename,quotechar='"',skiprows=skiplines)
-    data = data[data['Ticker'] != 'QACDS']
 
-    #data['TotalCost'] = data['Cost']*data['Quantity']
-    #data.dropna(inplace=True)
-    data.filter(items=['Ticker','Quantity','Cost']).groupby(['Ticker']).sum().to_csv(outfile,header=False,sep='|')
-    update_current(CURRENT_PORT, outfile)
+    if 'chase' == broker:
+        # calculate footers
+        skiplines = []
+        with open(filename, 'r') as src:
+            for i,line in enumerate(src.readlines(),1):
+                if 1 == i:
+                    continue # do not skip header
+                if not line or not ('"' == line[0]):
+                    print('skipping',line[0], line)
+                    skiplines.append(i)
+        print('skipping lines', skiplines)
 
+        data = pd.read_csv(filename,quotechar='"',skiprows=skiplines)
+        data = data[data['Ticker'] != 'QACDS'] # avoid cash
+
+        #data['TotalCost'] = data['Cost']*data['Quantity']
+        #data.dropna(inplace=True)
+        data.filter(items=['Ticker','Quantity','Cost']).groupby(['Ticker']).sum().to_csv(outfile,header=False,sep='|')
+        update_current(CURRENT_PORT, outfile)
+
+    if 'yahoo' == broker:
+        data = pd.read_csv(filename,sep=',', quoting=csv.QUOTE_NONE, usecols=['Symbol','Quantity','Purchase Price','Comment'])
+        data['Quantity'].fillna(0,inplace=True)
+        data['Purchase Price'].fillna(0,inplace=True)
+        data.to_csv(outfile,header=False,sep='|',index=False)
+        update_current(CURRENT_PORT, outfile)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='STOKIT stock monitoring tool.')
@@ -59,7 +68,7 @@ if __name__ == "__main__":
     # import
     import_command_parser = subcommands.add_parser('import', help='Import portfolio/Holdings file')
     import_command_parser.add_argument('holdingfile')
-    import_command_parser.add_argument('--broker', help='File exported from broker', choices=['chase','yahoo'])
+    import_command_parser.add_argument('--broker', help='File exported from broker', choices=['chase','yahoo'], default='yahoo')
     #import_command_parser.add_argument('portfile', type=argparse.FileType('r'))
 
     # pull
@@ -96,7 +105,7 @@ if __name__ == "__main__":
         update_current(CURRENT_PORT,args.portfile)
 
     if args.action == 'import':
-        import_portfolio(args.holdingfile)
+        import_portfolio(args.broker, args.holdingfile)
     
     port = './portfolio.csv'
     try:
